@@ -7,30 +7,29 @@ export const resolveStyles = (style) => {
   for (const [key, value] of Object.entries(style)) {
     switch (key) {
       case "font":
-        resolved.fontFamily = `var(--font-${value}-family)`;
-        resolved.fontWeight = `var(--font-${value}-weight)`;
-        resolved.fontSize = `var(--font-${value}-size)`;
-        resolved.lineHeight = `var(--font-${value}-line-height)`;
+        resolved.fontFamily = `var(--font-${value}-family, Inter, sans-serif)`;
+        resolved.fontWeight = `var(--font-${value}-weight, 400)`;
+        resolved.fontSize = `var(--font-${value}-size, 16px)`;
+        resolved.lineHeight = `var(--font-${value}-line-height, 1.5)`;
         break;
         
       case "radius":
       case "borderRadius":
         resolved.borderRadius =
-          typeof value === "number" ? `${value}px` : `var(--radius-${value})`;
+          typeof value === "number" ? `${value}px` : `var(--radius-${value}, 8px)`;
         break;
         
-      case "rounded": {
+      case "rounded":
         if (value === false) {
-            resolved.borderRadius = "0px";
+          resolved.borderRadius = "0px";
         } else if (value === true) {
-            resolved.borderRadius = "var(--radius-md, 8px)";
+          resolved.borderRadius = "8px";
         } else if (typeof value === "number") {
-            resolved.borderRadius = `${value}px`;
+          resolved.borderRadius = `${value}px`;
         } else {
-            resolved.borderRadius = `var(--radius-${value}, 8px)`;
+          resolved.borderRadius = `var(--radius-${value}, 8px)`;
         }
         break;
-      }
       
       case "padding":
       case "margin":
@@ -38,49 +37,39 @@ export const resolveStyles = (style) => {
       case "marginRight":
       case "marginBottom":
       case "marginLeft":
+      case "paddingTop":
+      case "paddingRight":
+      case "paddingBottom":
+      case "paddingLeft":
       case "gap":
         resolved[key] =
           typeof value === "number"
             ? `${value}px`
-            : `var(--spacing-${value}, ${value}px)`;
+            : `var(--spacing-${value}, 16px)`;
         break;
         
       case "background":
       case "backgroundColor":
-        // Handle color tokens - check if it's a token name or hex value
         if (typeof value === 'string' && value.startsWith('#')) {
           resolved.backgroundColor = value;
         } else {
-          // It's a token name like "primary" or "neutral-50"
-          resolved.backgroundColor = `var(--color-${value})`;
+          resolved.backgroundColor = `var(--color-${value}, ${value})`;
         }
         break;
         
       case "color":
-        // Handle text color tokens
         if (typeof value === 'string' && value.startsWith('#')) {
           resolved.color = value;
         } else {
-          resolved.color = `var(--color-${value})`;
+          resolved.color = `var(--color-${value}, ${value})`;
         }
         break;
         
-      case "borderColor":
-        // Handle border color tokens
-        if (typeof value === 'string' && value.startsWith('#')) {
-          resolved.borderColor = value;
-        } else {
-          resolved.borderColor = `var(--color-${value})`;
-        }
-        break;
-        
-      case "border":
-        // Handle border shorthand - preserve as is
-        resolved.border = value;
+      case "shadow":
+        resolved.boxShadow = `var(--shadow-${value}, none)`;
         break;
         
       default:
-        // For any other style properties, pass through as-is
         resolved[key] = value;
         break;
     }
@@ -89,54 +78,76 @@ export const resolveStyles = (style) => {
 };
 
 const spacingToCss = (val) =>
-  typeof val === "number" ? `${val}px` : `var(--spacing-${val}, ${val}px)`;
+  typeof val === "number" ? `${val}px` : `var(--spacing-${val}, 16px)`;
 
-/** Render the DSL node recursively */
 const LayoutNode = ({ node }) => {
   if (!node) return null;
 
-  // Leaf component
   if (node.type === "component") {
     return <ComponentNode component={node} />;
   }
 
-  // Container: row / stack / grid / box
   const containerStyle = {
     ...resolveStyles(node.style || {}),
   };
 
-  // Map generic layout props -> CSS
   if (node.padding != null) containerStyle.padding = spacingToCss(node.padding);
+  if (node.margin != null) containerStyle.margin = spacingToCss(node.margin);
   if (node.gap != null) containerStyle.gap = spacingToCss(node.gap);
 
-  if (node.type === "row" || node.type === "stack") {
-    containerStyle.display = "flex";
-    containerStyle.flexDirection =
-      node.type === "row"
-        ? "row"
-        : node.direction === "row"
-        ? "row"
-        : "column";
 
-    // align-items / justify-content from tokens
-    const alignMap = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
-    const justifyMap = { start: "flex-start", center: "center", end: "flex-end", between: "space-between" };
-    if (node.align) containerStyle.alignItems = alignMap[node.align] || node.align;
-    if (node.justify) containerStyle.justifyContent = justifyMap[node.justify] || node.justify;
+  switch (node.type) {
+    case "stack":
+      containerStyle.display = "flex";
+      containerStyle.flexDirection = node.direction === "row" ? "row" : "column";
+      
+      const alignMap = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
+      const justifyMap = { start: "flex-start", center: "center", end: "flex-end", between: "space-between" };
+      
+      if (node.align) containerStyle.alignItems = alignMap[node.align] || node.align;
+      if (node.justify) containerStyle.justifyContent = justifyMap[node.justify] || node.justify;
+      break;
+
+    case "row":
+      containerStyle.display = "flex";
+      containerStyle.flexDirection = "row";
+      
+      if (node.align) containerStyle.alignItems = alignMap[node.align] || node.align;
+      if (node.justify) containerStyle.justifyContent = justifyMap[node.justify] || node.justify;
+      break;
+
+    case "grid":
+      containerStyle.display = "grid";
+      const cols = node.cols?.base || 1;
+      containerStyle.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+      break;
+
+    case "section":
+      containerStyle.display = "block";
+      if (node.maxWidth) {
+        containerStyle.maxWidth = typeof node.maxWidth === "number" ? `${node.maxWidth}px` : node.maxWidth;
+      }
+      if (node.centered !== false) {
+        containerStyle.margin = containerStyle.margin || "0 auto";
+      }
+
+      if (!containerStyle.padding && !node.padding) {
+        containerStyle.padding = spacingToCss("xl");
+      }
+      break;
+
+    case "box":
+    default:
+      containerStyle.display = "block";
+      break;
   }
 
-  if (node.type === "grid") {
-    containerStyle.display = "grid";
-    const cols = node.cols?.base || 1;
-    containerStyle.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    // NOTE: For md/lg, you can inject a <style> tag with media queries if desired.
-  }
 
-  const kids = Array.isArray(node.children) ? node.children : [];
-
+  const children = Array.isArray(node.children) ? node.children : [];
+  
   return (
     <div style={containerStyle}>
-      {kids.map((child, idx) => (
+      {children.map((child, idx) => (
         <LayoutNode key={idx} node={child} />
       ))}
     </div>

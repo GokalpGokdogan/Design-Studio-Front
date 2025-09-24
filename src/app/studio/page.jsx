@@ -36,6 +36,7 @@ export default function Page() {
     e.preventDefault()
     setLoading(true)
     const result = await Promise.resolve(generateDesignDataFromPrompt(prompt))
+    console.log(result)
     setDesignData(result)
     setLoading(false)
   }
