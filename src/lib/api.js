@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
   headers: {
     "Content-Type": "application/json",
   },
@@ -20,7 +20,7 @@ api.interceptors.response.use(
 // === API helpers ===
 export const generateDesign = (prompt) =>
   api.post(
-    "/generate-design",
+    "/api/generate-design",
     { prompt: prompt.trim() }
   )
 
