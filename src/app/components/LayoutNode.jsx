@@ -1,9 +1,9 @@
 import ComponentNode from "./ComponentNode";
 
-/** Convert token-y style object into real CSS inline styles */
 export const resolveStyles = (style) => {
   if (!style) return {};
   const resolved = {};
+  
   for (const [key, value] of Object.entries(style)) {
     switch (key) {
       case "font":
@@ -12,7 +12,9 @@ export const resolveStyles = (style) => {
         resolved.fontSize = `var(--font-${value}-size)`;
         resolved.lineHeight = `var(--font-${value}-line-height)`;
         break;
+        
       case "radius":
+      case "borderRadius":
         resolved.borderRadius =
           typeof value === "number" ? `${value}px` : `var(--radius-${value})`;
         break;
@@ -25,10 +27,11 @@ export const resolveStyles = (style) => {
         } else if (typeof value === "number") {
             resolved.borderRadius = `${value}px`;
         } else {
-            resolved.borderRadius = `var(--radius-${value}, 8px)`; // e.g. "sm" | "lg" | "pill"
+            resolved.borderRadius = `var(--radius-${value}, 8px)`;
         }
         break;
-    }
+      }
+      
       case "padding":
       case "margin":
       case "marginTop":
@@ -41,10 +44,43 @@ export const resolveStyles = (style) => {
             ? `${value}px`
             : `var(--spacing-${value}, ${value}px)`;
         break;
+        
       case "background":
-        resolved.backgroundColor = value;
+      case "backgroundColor":
+        // Handle color tokens - check if it's a token name or hex value
+        if (typeof value === 'string' && value.startsWith('#')) {
+          resolved.backgroundColor = value;
+        } else {
+          // It's a token name like "primary" or "neutral-50"
+          resolved.backgroundColor = `var(--color-${value})`;
+        }
         break;
+        
+      case "color":
+        // Handle text color tokens
+        if (typeof value === 'string' && value.startsWith('#')) {
+          resolved.color = value;
+        } else {
+          resolved.color = `var(--color-${value})`;
+        }
+        break;
+        
+      case "borderColor":
+        // Handle border color tokens
+        if (typeof value === 'string' && value.startsWith('#')) {
+          resolved.borderColor = value;
+        } else {
+          resolved.borderColor = `var(--color-${value})`;
+        }
+        break;
+        
+      case "border":
+        // Handle border shorthand - preserve as is
+        resolved.border = value;
+        break;
+        
       default:
+        // For any other style properties, pass through as-is
         resolved[key] = value;
         break;
     }

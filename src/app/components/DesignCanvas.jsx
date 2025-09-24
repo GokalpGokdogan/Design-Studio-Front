@@ -2,24 +2,64 @@
 
 import LayoutNode from "./LayoutNode";
 
+// DesignCanvas.jsx - Update createTokenStyles function
 const createTokenStyles = (tokens) => {
   if (!tokens) return '';
+  
   const variables = [];
+  
+  // Color tokens
   for (const [key, token] of Object.entries(tokens.color || {})) {
     variables.push(`--color-${key}: ${token.value};`);
+    
+    // Create semantic aliases
+    if (key === 'primary') {
+      variables.push(`--color-button-primary: ${token.value};`);
+      variables.push(`--color-badge-primary: ${token.value}20;`);
+      variables.push(`--color-badge-primary-text: ${token.value};`);
+    }
+    if (key === 'success') {
+      variables.push(`--color-badge-success: ${token.value}20;`);
+      variables.push(`--color-badge-success-text: ${token.value};`);
+    }
   }
+  
+  // Component-specific tokens
+  for (const [key, value] of Object.entries(tokens.spacing || {})) {
+    variables.push(`--spacing-${key}: ${value}px;`);
+    // Component spacing
+    variables.push(`--spacing-button-x: ${value * 2}px;`);
+    variables.push(`--spacing-button-y: ${value}px;`);
+    variables.push(`--spacing-card: ${value * 2}px;`);
+  }
+  
+  // Border radius
+  for (const [key, value] of Object.entries(tokens.borderRadius || {})) {
+    variables.push(`--radius-${key}: ${value}px;`);
+    // Component radii
+    variables.push(`--radius-button: ${value}px;`);
+    variables.push(`--radius-card: ${value}px;`);
+    variables.push(`--radius-badge: 9999px;`);
+  }
+  
+  // Typography
   for (const [key, typo] of Object.entries(tokens.typography || {})) {
     variables.push(`--font-${key}-family: ${typo.fontFamily};`);
     variables.push(`--font-${key}-weight: ${typo.fontWeight};`);
     variables.push(`--font-${key}-size: ${typo.fontSize}px;`);
     variables.push(`--font-${key}-line-height: ${typo.lineHeight};`);
+    
+    // Map to component roles
+    if (key === 'heading') {
+      variables.push(`--font-heading-weight: ${typo.fontWeight};`);
+      variables.push(`--font-heading-line-height: ${typo.lineHeight};`);
+    }
+    if (key === 'body') {
+      variables.push(`--font-body-size: ${typo.fontSize}px;`);
+      variables.push(`--font-body-line-height: ${typo.lineHeight};`);
+    }
   }
-  for (const [key, value] of Object.entries(tokens.spacing || {})) {
-    variables.push(`--spacing-${key}: ${value}px;`);
-  }
-  for (const [key, value] of Object.entries(tokens.borderRadius || {})) {
-    variables.push(`--radius-${key}: ${value}px;`);
-  }
+  
   return `:root { ${variables.join(' ')} }`;
 };
 
