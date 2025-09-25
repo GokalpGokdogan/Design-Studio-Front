@@ -15,15 +15,18 @@ export const resolveStyles = (style) => {
         
       case "radius":
       case "borderRadius":
-        resolved.borderRadius =
-          typeof value === "number" ? `${value}px` : `var(--radius-${value}, 8px)`;
+        if (typeof value === "number") {
+          resolved.borderRadius = `${value}px`;
+        } else {
+          resolved.borderRadius = `var(--radius-${value}, 8px)`;
+        }
         break;
         
       case "rounded":
         if (value === false) {
           resolved.borderRadius = "0px";
         } else if (value === true) {
-          resolved.borderRadius = "8px";
+          resolved.borderRadius = "var(--radius-md, 8px)";
         } else if (typeof value === "number") {
           resolved.borderRadius = `${value}px`;
         } else {
@@ -42,10 +45,11 @@ export const resolveStyles = (style) => {
       case "paddingBottom":
       case "paddingLeft":
       case "gap":
-        resolved[key] =
-          typeof value === "number"
-            ? `${value}px`
-            : `var(--spacing-${value}, 16px)`;
+        if (typeof value === "number") {
+          resolved[key] = `${value}px`;
+        } else {
+          resolved[key] = `var(--spacing-${value}, 16px)`;
+        }
         break;
         
       case "background":
@@ -63,6 +67,7 @@ export const resolveStyles = (style) => {
         } else {
           resolved.color = `var(--color-${value}, ${value})`;
         }
+        print(resolved.color)
         break;
         
       case "shadow":
@@ -76,7 +81,6 @@ export const resolveStyles = (style) => {
   }
   return resolved;
 };
-
 const spacingToCss = (val) =>
   typeof val === "number" ? `${val}px` : `var(--spacing-${val}, 16px)`;
 

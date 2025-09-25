@@ -15,7 +15,7 @@ const ComponentNode = ({ component }) => {
       fontSize: '16px',
       lineHeight: '1.5',
       padding: '12px 24px',
-      borderRadius: '8px',
+      borderRadius: 'var(--radius-md, 8px)',
       transition: 'all 0.2s ease',
       textDecoration: 'none',
       userSelect: 'none'
@@ -23,47 +23,50 @@ const ComponentNode = ({ component }) => {
     input: {
       boxSizing: 'border-box',
       width: '100%',
-      border: '1px solid #d4d4d8',
-      borderRadius: '8px',
+      border: '1px solid var(--color-neutral-200, #d4d4d8)',
+      borderRadius: 'var(--radius-md, 8px)',
       padding: '12px 16px',
       fontSize: '16px',
       lineHeight: '1.5',
-      backgroundColor: '#ffffff',
-      color: '#18181b',
+      backgroundColor: 'var(--color-neutral-50, #ffffff)',
+      color: 'var(--color-neutral-900, #18181b)',
       transition: 'border-color 0.2s ease',
       outline: 'none'
     },
     card: {
-      background: '#ffffff',
-      borderRadius: '12px',
-      border: '1px solid #e4e4e7',
+      background: 'var(--color-neutral-50, #ffffff)',
+      borderRadius: 'var(--radius-lg, 12px)',
+      border: '1px solid var(--color-neutral-200, #e4e4e7)',
       padding: '24px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+      boxShadow: 'var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1))'
     }
   };
 
   const getButtonVariant = (variant = 'primary') => {
-    const variants = {
-      primary: {
-        background: '#0284c7',
-        color: 'white'
-      },
-      secondary: {
-        background: '#f4f4f5',
-        color: '#18181b',
-        border: '1px solid #d4d4d8'
-      },
-      ghost: {
-        background: 'transparent',
-        color: '#0284c7'
-      },
-      destructive: {
-        background: '#ef4444',
-        color: 'white'
-      }
-    };
-    return variants[variant] || variants.primary;
+  const variants = {
+    primary: {
+      background: 'var(--color-primary-500, #0284c7)',
+      color: 'white',
+      border: 'none'
+    },
+    secondary: {
+      background: 'var(--color-neutral-200, #f4f4f5)',
+      color: 'var(--color-neutral-900, #18181b)',
+      border: '1px solid var(--color-neutral-200, #d4d4d8)'
+    },
+    ghost: {
+      background: 'transparent',
+      color: 'var(--color-primary-500, #0284c7)',
+      border: '1px solid transparent'
+    },
+    destructive: {
+      background: 'var(--color-destructive-500, #ef4444)',
+      color: 'white',
+      border: 'none'
+    }
   };
+  return variants[variant] || variants.primary;
+};
 
   const getSizeStyles = (size = 'md') => {
     const sizes = {
@@ -80,10 +83,9 @@ const ComponentNode = ({ component }) => {
     case "button":
       const buttonVariant = getButtonVariant(props.variant);
       const buttonSize = getSizeStyles(props.size);
-      
       return (
-        <button 
-          style={{ 
+        <button
+          style={{
             ...baseStyles.button,
             ...buttonVariant,
             ...buttonSize,
@@ -96,9 +98,9 @@ const ComponentNode = ({ component }) => {
           type={props.type || 'button'}
         >
           {props.loading && (
-            <div style={{ 
-              width: '16px', 
-              height: '16px', 
+            <div style={{
+              width: '16px',
+              height: '16px',
               border: '2px solid transparent',
               borderTop: '2px solid currentColor',
               borderRadius: '50%',
@@ -106,11 +108,11 @@ const ComponentNode = ({ component }) => {
               marginRight: content ? '8px' : 0
             }} />
           )}
-          {props.icon && props.iconPosition !== 'right' && 
+          {props.icon && props.iconPosition !== 'right' &&
             <span style={{ marginRight: content ? '8px' : 0 }}>{props.icon}</span>
           }
           {content}
-          {props.icon && props.iconPosition === 'right' && 
+          {props.icon && props.iconPosition === 'right' &&
             <span style={{ marginLeft: content ? '8px' : 0 }}>{props.icon}</span>
           }
         </button>
@@ -124,11 +126,11 @@ const ComponentNode = ({ component }) => {
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#18181b',
+              color: 'var(--color-neutral-900, #18181b)',
               marginBottom: '6px'
             }}>
               {props.label}
-              {props.required && <span style={{ color: '#ef4444' }}>*</span>}
+              {props.required && <span style={{ color: 'var(--color-destructive-500, #ef4444)' }}>*</span>}
             </label>
           )}
           <div style={{ position: 'relative' }}>
@@ -138,7 +140,7 @@ const ComponentNode = ({ component }) => {
                 left: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#a1a1aa',
+                color: 'var(--color-neutral-400, #a1a1aa)',
                 pointerEvents: 'none'
               }}>
                 {props.icon}
@@ -149,24 +151,24 @@ const ComponentNode = ({ component }) => {
               type={props.type || "text"}
               defaultValue={props.value || ""}
               disabled={props.disabled}
-              style={{ 
+              style={{
                 ...baseStyles.input,
                 ...getSizeStyles(props.size),
                 ...styles,
                 ...(props.icon && { paddingLeft: '44px' }),
-                ...(props.error && { 
-                  borderColor: '#ef4444',
+                ...(props.error && {
+                  borderColor: 'var(--color-destructive-500, #ef4444)',
                   boxShadow: '0 0 0 3px rgba(239, 68, 68, 0.1)'
                 })
               }}
               onFocus={(e) => {
                 if (!props.error) {
-                  e.target.style.borderColor = '#0ea5e9';
+                  e.target.style.borderColor = 'var(--color-primary-500, #0ea5e9)';
                   e.target.style.boxShadow = '0 0 0 3px rgba(14, 165, 233, 0.1)';
                 }
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#d4d4d8';
+                e.target.style.borderColor = 'var(--color-neutral-200, #d4d4d8)';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -174,7 +176,7 @@ const ComponentNode = ({ component }) => {
           {(props.helperText || props.error) && (
             <p style={{
               fontSize: '12px',
-              color: props.error ? '#ef4444' : '#71717a',
+              color: props.error ? 'var(--color-destructive-500, #ef4444)' : 'var(--color-neutral-500, #71717a)',
               marginTop: '4px',
               margin: '4px 0 0 0'
             }}>
@@ -192,11 +194,11 @@ const ComponentNode = ({ component }) => {
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#18181b',
+              color: 'var(--color-neutral-900, #18181b)',
               marginBottom: '6px'
             }}>
               {props.label}
-              {props.required && <span style={{ color: '#ef4444' }}>*</span>}
+              {props.required && <span style={{ color: 'var(--color-destructive-500, #ef4444)' }}>*</span>}
             </label>
           )}
           <textarea
@@ -204,7 +206,7 @@ const ComponentNode = ({ component }) => {
             defaultValue={props.value || ""}
             disabled={props.disabled}
             rows={props.rows || 4}
-            style={{ 
+            style={{
               ...baseStyles.input,
               ...styles,
               resize: 'vertical',
@@ -220,7 +222,7 @@ const ComponentNode = ({ component }) => {
         <section style={{
           padding: '80px 48px',
           textAlign: 'center',
-          background: 'linear-gradient(135deg, #f0f9ff 0%, #fafafa 100%)',
+          background: 'linear-gradient(135deg, #f0f9ff 0%, var(--color-neutral-50, #fafafa) 100%)',
           ...styles
         }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -228,7 +230,7 @@ const ComponentNode = ({ component }) => {
               <div style={{
                 fontSize: '14px',
                 fontWeight: '600',
-                color: '#0284c7',
+                color: 'var(--color-primary-500, #0284c7)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 marginBottom: '16px'
@@ -240,7 +242,7 @@ const ComponentNode = ({ component }) => {
               fontSize: '48px',
               fontWeight: '800',
               lineHeight: '1.1',
-              color: '#18181b',
+              color: 'var(--color-neutral-900, #18181b)',
               margin: '0 0 24px 0',
               letterSpacing: '-0.02em'
             }}>
@@ -249,7 +251,7 @@ const ComponentNode = ({ component }) => {
             {props.subtitle && (
               <p style={{
                 fontSize: '18px',
-                color: '#71717a',
+                color: 'var(--color-neutral-500, #71717a)',
                 lineHeight: '1.6',
                 maxWidth: '600px',
                 margin: '0 auto 48px auto'
@@ -264,33 +266,33 @@ const ComponentNode = ({ component }) => {
     case "stats":
       const itemCount = (props.items || []).length;
       return (
-        <div style={{ 
+        <div style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${Math.min(itemCount, 4)}, 1fr)`,
           gap: '24px',
-          ...styles 
+          ...styles
         }}>
           {(props.items || []).map((item, index) => (
             <div key={index} style={{
               padding: '24px',
-              background: '#ffffff',
-              borderRadius: '12px',
-              border: '1px solid #e4e4e7',
+              background: 'var(--color-neutral-50, #ffffff)',
+              borderRadius: 'var(--radius-lg, 12px)',
+              border: '1px solid var(--color-neutral-200, #e4e4e7)',
               textAlign: 'center',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              boxShadow: 'var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1))'
             }}>
-              <div style={{ 
-                fontSize: '36px', 
+              <div style={{
+                fontSize: '36px',
                 fontWeight: '800',
-                color: '#0284c7',
+                color: 'var(--color-primary-500, #0284c7)',
                 lineHeight: '1',
                 marginBottom: '8px'
               }}>
                 {item.value}
               </div>
-              <div style={{ 
-                fontSize: '14px', 
-                color: '#71717a',
+              <div style={{
+                fontSize: '14px',
+                color: 'var(--color-neutral-500, #71717a)',
                 fontWeight: '500'
               }}>
                 {item.label}
@@ -298,7 +300,7 @@ const ComponentNode = ({ component }) => {
               {item.trend && (
                 <div style={{
                   fontSize: '12px',
-                  color: item.trend.startsWith('+') ? '#22c55e' : '#ef4444',
+                  color: item.trend.startsWith('+') ? 'var(--color-success-500, #22c55e)' : 'var(--color-destructive-500, #ef4444)',
                   marginTop: '4px',
                   fontWeight: '500'
                 }}>
@@ -313,43 +315,38 @@ const ComponentNode = ({ component }) => {
     case "card":
     return (
         <div style={{
-        background: '#ffffff',
-        borderRadius: '12px',
-        border: '1px solid #e4e4e7',
-        padding: '24px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        ...baseStyles.card,
         ...styles,
         ...(props.shadow === false && { boxShadow: 'none' }),
-        ...(props.bordered && { border: '2px solid #e4e4e7' })
+        ...(props.bordered && { border: '2px solid var(--color-neutral-200, #e4e4e7)' })
         }}>
         {props.header && (
             <div style={{
             marginBottom: '20px',
             paddingBottom: '16px',
-            borderBottom: '1px solid #e4e4e7'
+            borderBottom: '1px solid var(--color-neutral-200, #e4e4e7)'
             }}>
             <h3 style={{
                 margin: 0,
                 fontSize: '20px',
                 fontWeight: '600',
-                color: '#18181b'
+                color: 'var(--color-neutral-900, #18181b)'
             }}>
                 {props.header}
             </h3>
             </div>
         )}
-        
-        {/* Card content area - this is where form elements would go */}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {content && <div>{content}</div>}
 
         </div>
-        
+
         {props.footer && (
             <div style={{
             marginTop: '20px',
             paddingTop: '16px',
-            borderTop: '1px solid #e4e4e7'
+            borderTop: '1px solid var(--color-neutral-200, #e4e4e7)'
             }}>
             {props.footer}
             </div>
@@ -359,23 +356,23 @@ const ComponentNode = ({ component }) => {
     case "table":
       return (
         <div style={{
-          background: '#ffffff',
-          borderRadius: '12px',
+          background: 'var(--color-neutral-50, #ffffff)',
+          borderRadius: 'var(--radius-lg, 12px)',
           overflow: 'hidden',
-          border: '1px solid #e4e4e7',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          border: '1px solid var(--color-neutral-200, #e4e4e7)',
+          boxShadow: 'var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1))',
           ...styles
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#fafafa' }}>
+              <tr style={{ background: 'var(--color-neutral-100, #fafafa)' }}>
                 {(props.headers || []).map((header, index) => (
                   <th key={index} style={{
                     padding: '16px 20px',
                     textAlign: 'left',
                     fontSize: '12px',
                     fontWeight: '600',
-                    color: '#18181b',
+                    color: 'var(--color-neutral-900, #18181b)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
@@ -386,14 +383,14 @@ const ComponentNode = ({ component }) => {
             </thead>
             <tbody>
               {(props.rows || []).map((row, rowIndex) => (
-                <tr key={rowIndex} style={{ 
-                  borderBottom: rowIndex < (props.rows.length - 1) ? '1px solid #e4e4e7' : 'none'
+                <tr key={rowIndex} style={{
+                  borderBottom: rowIndex < (props.rows.length - 1) ? '1px solid var(--color-neutral-200, #e4e4e7)' : 'none'
                 }}>
                   {row.map((cell, cellIndex) => (
                     <td key={cellIndex} style={{
                       padding: '16px 20px',
                       fontSize: '14px',
-                      color: '#71717a'
+                      color: 'var(--color-neutral-500, #71717a)'
                     }}>
                       {cell}
                     </td>
@@ -413,10 +410,10 @@ const ComponentNode = ({ component }) => {
         warning: { background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' },
         error: { background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }
       };
-      
+
       const badgeSize = getSizeStyles(props.size || 'sm');
       const badgeVariant = badgeVariants[props.variant || 'default'];
-      
+
       return (
         <span style={{
           display: 'inline-flex',
@@ -437,19 +434,19 @@ const ComponentNode = ({ component }) => {
       const Tag = `h${props.level || 1}`;
       const sizes = {
         1: '36px',
-        2: '30px', 
+        2: '30px',
         3: '24px',
         4: '20px',
         5: '18px',
         6: '16px'
       };
-      
+
       return (
         <Tag style={{
           fontSize: sizes[props.level || 1],
           fontWeight: '600',
           lineHeight: '1.2',
-          color: '#18181b',
+          color: 'var(--color-neutral-900, #18181b)',
           margin: 0,
           ...styles
         }}>
@@ -463,7 +460,7 @@ const ComponentNode = ({ component }) => {
         <p style={{
           fontSize: '16px',
           lineHeight: '1.5',
-          color: '#71717a',
+          color: 'var(--color-neutral-500, #71717a)',
           margin: 0,
           ...styles
         }}>
@@ -477,13 +474,13 @@ const ComponentNode = ({ component }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#f4f4f5',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-neutral-100, #f4f4f5)',
+          borderRadius: 'var(--radius-md, 8px)',
           minHeight: '200px',
-          border: '2px dashed #d4d4d8',
+          border: '2px dashed var(--color-neutral-200, #d4d4d8)',
           ...styles
         }}>
-          <div style={{ textAlign: 'center', color: '#a1a1aa' }}>
+          <div style={{ textAlign: 'center', color: 'var(--color-neutral-400, #a1a1aa)' }}>
             <div style={{ fontSize: '24px', marginBottom: '8px' }}>🖼️</div>
             <span style={{ fontSize: '14px' }}>
               {props.alt || "Image placeholder"}
@@ -503,8 +500,8 @@ const ComponentNode = ({ component }) => {
           textAlign: 'center',
           ...styles
         }}>
-          <span style={{ 
-            color: '#a1a1aa', 
+          <span style={{
+            color: '#a1a1aa',
             fontSize: '12px',
             fontFamily: 'monospace'
           }}>

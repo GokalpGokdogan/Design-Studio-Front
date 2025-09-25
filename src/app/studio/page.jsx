@@ -53,7 +53,7 @@ export default function Page() {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe your design idea…"
-              className="w-[300px] md:w-[460px] bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+              className="w-[300px] md:w-[460px] bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none"
             />
             <button
               type="submit"

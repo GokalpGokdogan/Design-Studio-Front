@@ -2,96 +2,139 @@
 
 import LayoutNode from "./LayoutNode";
 
-// DesignCanvas.jsx - Update createTokenStyles function
 const createTokenStyles = (tokens) => {
   if (!tokens) return '';
   
   const variables = [];
   
-  // Color tokens
+  // Handle color tokens correctly
   for (const [key, token] of Object.entries(tokens.color || {})) {
-    variables.push(`--color-${key}: ${token.value};`);
-    
-    // Create semantic aliases
-    if (key === 'primary') {
-      variables.push(`--color-button-primary: ${token.value};`);
-      variables.push(`--color-badge-primary: ${token.value}20;`);
-      variables.push(`--color-badge-primary-text: ${token.value};`);
-    }
-    if (key === 'success') {
-      variables.push(`--color-badge-success: ${token.value}20;`);
-      variables.push(`--color-badge-success-text: ${token.value};`);
+    if (token && token.value) {
+      variables.push(`--color-${key}: ${token.value};`);
     }
   }
   
-  // Component-specific tokens
+  // Handle typography tokens
+  for (const [key, typo] of Object.entries(tokens.typography || {})) {
+    if (typo) {
+      if (typo.fontFamily) variables.push(`--font-${key}-family: ${typo.fontFamily};`);
+      if (typo.fontWeight) variables.push(`--font-${key}-weight: ${typo.fontWeight};`);
+      if (typo.fontSize) variables.push(`--font-${key}-size: ${typo.fontSize}px;`);
+      if (typo.lineHeight) variables.push(`--font-${key}-line-height: ${typo.lineHeight};`);
+      if (typo.letterSpacing) {
+        variables.push(`--font-${key}-letter-spacing: ${typo.letterSpacing};`);
+      }
+    }
+  }
+  
+  // Handle spacing tokens
   for (const [key, value] of Object.entries(tokens.spacing || {})) {
     variables.push(`--spacing-${key}: ${value}px;`);
-    // Component spacing
-    variables.push(`--spacing-button-x: ${value * 2}px;`);
-    variables.push(`--spacing-button-y: ${value}px;`);
-    variables.push(`--spacing-card: ${value * 2}px;`);
   }
   
-  // Border radius
+  // Handle borderRadius tokens
   for (const [key, value] of Object.entries(tokens.borderRadius || {})) {
     variables.push(`--radius-${key}: ${value}px;`);
-    // Component radii
-    variables.push(`--radius-button: ${value}px;`);
-    variables.push(`--radius-card: ${value}px;`);
-    variables.push(`--radius-badge: 9999px;`);
   }
   
-  // Typography
-  for (const [key, typo] of Object.entries(tokens.typography || {})) {
-    variables.push(`--font-${key}-family: ${typo.fontFamily};`);
-    variables.push(`--font-${key}-weight: ${typo.fontWeight};`);
-    variables.push(`--font-${key}-size: ${typo.fontSize}px;`);
-    variables.push(`--font-${key}-line-height: ${typo.lineHeight};`);
+  // Handle shadow tokens
+  for (const [key, value] of Object.entries(tokens.shadow || {})) {
+    variables.push(`--shadow-${key}: ${value};`);
+  }
+  
+  const globalStyles = `
+    * {
+      box-sizing: border-box;
+    }
     
-    // Map to component roles
-    if (key === 'heading') {
-      variables.push(`--font-heading-weight: ${typo.fontWeight};`);
-      variables.push(`--font-heading-line-height: ${typo.lineHeight};`);
+    body, html {
+      font-family: var(--font-body-family, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
-    if (key === 'body') {
-      variables.push(`--font-body-size: ${typo.fontSize}px;`);
-      variables.push(`--font-body-line-height: ${typo.lineHeight};`);
+    
+    button, input, textarea, select {
+      font-family: inherit;
     }
-  }
+    
+    button:hover {
+      transform: translateY(-1px);
+    }
+    
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--color-primary-500, #0ea5e9);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+  `;
   
-  return `:root { ${variables.join(' ')} }`;
+  return `:root { ${variables.join(' ')} } ${globalStyles}`;
 };
 
 const DesignCanvas = ({ designData }) => {
   if (!designData || !designData.artboard) {
     return (
       <div className="flex h-[720px] items-center justify-center text-sm text-slate-500">
-        Enter a prompt and click Generate to see a design.
+        <div className="text-center">
+          <div className="text-6xl mb-4">✨</div>
+          <p>Enter a prompt and click Generate to create a stunning design.</p>
+          <p className="text-xs mt-2 opacity-60">Try: "modern dashboard", "login page", "pricing section"</p>
+        </div>
       </div>
     );
   }
-  console.log(designData)
+
+  // console.log('Design Data:', designData);
+  
   const { figmaTokens, artboard, tree, floating = [] } = designData;
   const tokenStyleString = createTokenStyles(figmaTokens);
+
+  const canvasWidth = Math.min(artboard.width, 1400);
+  const canvasHeight = Math.min(artboard.height, 1000);
+  const scale = canvasWidth < artboard.width ? canvasWidth / artboard.width : 1;
 
   return (
     <>
       <style>{tokenStyleString}</style>
       <div
-        className="relative mx-auto my-8 shadow-lg overflow-hidden"
+        className="relative mx-auto my-8 shadow-2xl overflow-hidden animate-fade-in"
         style={{
-          width: `${artboard.width}px`,
-          height: `${artboard.height}px`,
-          backgroundColor: artboard.background
+          width: `${canvasWidth}px`,
+          height: `${canvasHeight}px`,
+          backgroundColor: artboard.background || 'var(--color-neutral-50, #ffffff)',
+          borderRadius: 'var(--radius-lg, 16px)',
+          border: '1px solid var(--color-neutral-200, #e4e4e7)',
+          transform: scale < 1 ? `scale(${scale})` : 'none',
+          transformOrigin: 'top center'
         }}
       >
-        {/* Main tree */}
-        <div className="absolute inset-0 p-4 box-border">
+
+        <div className="absolute inset-0">
           <LayoutNode node={tree} />
         </div>
 
-        {/* Floating overlays */}
         {floating.map((item, idx) => {
           const pos = item.position || {};
           const style = {
@@ -100,7 +143,8 @@ const DesignCanvas = ({ designData }) => {
             ...(pos.left != null ? { left: `${pos.left}px` } : {}),
             ...(pos.right != null ? { right: `${pos.right}px` } : {}),
             ...(pos.bottom != null ? { bottom: `${pos.bottom}px` } : {}),
-            pointerEvents: "auto"
+            pointerEvents: "auto",
+            zIndex: 1000 + idx
           };
           return (
             <div key={idx} style={style}>
