@@ -1,10 +1,11 @@
-"use client";
+"use client"
 
-import { useState } from "react"
-import DesignCanvas from "../components/DesignCanvas"
+import { useState, useEffect, useCallback } from "react"
+import InfiniteCanvas from "../components/InfiniteCanvas"
 import {
   ArrowRightIcon,
   CloudArrowDownIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline"
 import { generateDesign } from "../../lib/api"
 
@@ -30,147 +31,215 @@ async function generateDesignDataFromPrompt(prompt) {
   }
 }
 
-export default function Studio() {
+// Local storage utilities
+const STORAGE_KEY = 'infinite-canvas-designs'
 
-  const [prompt, setPrompt] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("prompt") ?? "" : ""
-  );
+const saveDesignsToStorage = (designs) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(designs))
+  } catch (err) {
+    console.error('Failed to save designs to storage:', err)
+  }
+}
 
-  const [designData, setDesignData] = useState(null)
+const loadDesignsFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch (err) {
+    console.error('Failed to load designs from storage:', err)
+    return []
+  }
+}
+
+export default function Page() {
+
+  const [prompt, setPrompt] = useState("");
+  const [designs, setDesigns] = useState([])
   const [loading, setLoading] = useState(false)
+  const [canvasAPI, setCanvasAPI] = useState(null)
 
-  
+  useEffect(() => {
+    const savedDesigns = loadDesignsFromStorage()
+    setDesigns(savedDesigns)
+  }, [])
 
+  useEffect(() => {
+    const saved = localStorage.getItem("prompt");
+    if (saved) setPrompt(saved);
+  }, []);
 
+  useEffect(() => {
+    saveDesignsToStorage(designs)
+  }, [designs])
+
+  const handleDesignsUpdate = useCallback((updatedDesigns) => {
+    setDesigns(updatedDesigns)
+  }, [])
+
+  // Generate new design and add to canvas
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    const result = await Promise.resolve(generateDesignDataFromPrompt(prompt))
-  //   const result = {"figmaTokens": {
-  //       "color": {
-  //           "primary-500": { "value": "#06b6b6" },
-  //           "neutral-50": { "value": "#fafafa" },
-  //           "neutral-200": { "value": "#e4e4e7" },
-  //           "neutral-900": { "value": "#18181b" }
-  //       },
-  //       "spacing": { "md": 16, "lg": 24, "xl": 32 },
-  //       "borderRadius": { "md": 8, "lg": 12 }
-  //   },
-  //   "meta": { "title": "Login Page", "prompt": "login use #06b6b6" },
-  //   "artboard": { "width": 1200, "height": 800, "background": "#fafafa" },
-  //   "tree": {
-  //       "type": "stack",
-  //       "direction": "column",
-  //       "gap": "xl",
-  //       "children": [
-  //           {
-  //               "type": "section",
-  //               "maxWidth": "800px",
-  //               "centered": true,
-  //               "children": [
-  //                   {
-  //                       "type": "component",
-  //                       "role": "heading",
-  //                       "content": "Login to your account",
-  //                       "props": { "level": 1 }
-  //                   },
-  //                   {
-  //                       "type": "component",
-  //                       "role": "input",
-  //                       "props": {
-  //                           "label": "Email",
-  //                           "placeholder": "Enter your email",
-  //                           "type": "email"
-  //                       }
-  //                   },
-  //                   {
-  //                       "type": "component",
-  //                       "role": "input",
-  //                       "props": {
-  //                           "label": "Password",
-  //                           "placeholder": "Enter your password",
-  //                           "type": "password"
-  //                       }
-  //                   },
-  //                   {
-  //                       "type": "component",
-  //                       "role": "button",
-  //                       "content": "Login",
-  //                       "props": { "variant": "primary" }
-  //                   }
-  //               ]
-  //           }
-  //       ]
-  //   }
-  // };
-    setDesignData(result)
-    console.log(result, designData)
+    if (!canvasAPI) return
 
+    setLoading(true)
+    try {
+      const result = await generateDesignDataFromPrompt(prompt)
+      if (result) {
+        // Add design to canvas at a random position
+        const position = {
+          x: Math.random() * 400 + 100,
+          y: Math.random() * 300 + 100
+        }
+        canvasAPI.addDesign(result, position)
+        localStorage.removeItem("prompt")
+        setPrompt("") 
+      }
+    } catch (err) {
+      console.error('Failed to generate design:', err)
+    }
     setLoading(false)
   }
 
+  // Export all designs as JSON
+  const handleExport = () => {
+    const exportData = {
+      version: "Latest",
+      timestamp: new Date().toISOString(),
+      designs: designs.map(design => ({
+        id: design.id,
+        data: design.data,
+        position: design.position,
+        timestamp: design.timestamp
+      }))
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `infinite-canvas-designs-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleClearAll = () => {
+    if (confirm('Are you sure you want to clear all designs? This cannot be undone.')) {
+      setDesigns([])
+    }
+  }
+
+  // Get the infinite canvas component and API
+  const { canvasComponent, addDesign, removeDesign, centerView, transform, selectedDesignId } = InfiniteCanvas({
+    designs,
+    onDesignsUpdate: handleDesignsUpdate
+  })
+
+  // Set canvas API reference
+  useEffect(() => {
+    if (addDesign && removeDesign) {
+      setCanvasAPI({ addDesign, removeDesign, centerView })
+    }
+  }, [addDesign, removeDesign, centerView])
+
   return (
-    <div className="h-dvh w-full overflow-hidden bg-[color:var(--page-bg,#f3f4f6)]">
-      <div className="relative h-full w-full">
-        <div className="pointer-events-auto absolute left-1/2 top-6 z-20 flex -translate-x-1/2 items-center gap-3">
+    <div className="h-screen w-full overflow-hidden bg-gray-100">
+      {/* Top toolbar */}
+      <div className="absolute top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between px-6 py-3">
+          {/* Left side - Logo/Title */}
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-semibold text-gray-900">Design Studio</h1>
+            <div className="text-sm text-gray-500">
+              {designs.length} design{designs.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {/* Center - Prompt input */}
           <form
             onSubmit={handleSubmit}
-            className="flex items-center gap-2 rounded-[14px] bg-white px-3 py-2 shadow-lg ring-1 ring-black/5"
+            className="flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2 border border-gray-200 focus-within:border-[#06b6b6] focus-within:ring-1 focus-within:ring-blue-500"
           >
             <input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Describe your design idea…"
-              className="w-[300px] md:w-[460px] bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none"
+              className="w-[400px] bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              disabled={loading}
             />
             <button
               type="submit"
-              className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white hover:bg-slate-800"
-              title="Generate"
+              disabled={loading || !prompt.trim()}
+              className="inline-flex items-center gap-1 rounded-md bg-[#06b6b6] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#06b6b6] disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Generate Design"
             >
-              Generate <ArrowRightIcon className="h-4 w-4" />
+              {loading ? 'Generating...' : 'Generate'} 
+              <ArrowRightIcon className="h-3 w-3" />
             </button>
           </form>
 
-          <button
-            type="button"
-            onClick={() => alert("Export not wired")}
-            className="flex items-center gap-2 rounded-[14px] bg-white px-3 py-2 text-sm text-slate-800 shadow-lg ring-1 ring-black/5 hover:bg-slate-50"
-          >
-            <CloudArrowDownIcon className="h-5 w-5" />
-            Export
-          </button>
-        </div>
-
-
-        {/* big canvas with subtle dotted grid */}
-        <div
-          className="absolute inset-0 top-20 overflow-auto"
-          style={{
-            background:
-              "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.16) 1px, transparent 0) 0 0 / 16px 16px",
-          }}
-        >
-          <div className="mx-auto my-12 min-w-[1100px] max-w-[1400px] px-8">
-              <div className="relative px-5 pb-6">
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-[color:var(--board,#fafafa)]">
-                  {loading ? (
-                    <div className="flex h-[600px] items-center justify-center text-sm text-slate-500">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
-                      Generating your design...
-                    </div>
-                  ) : (
-                    <div className="p-6">
-                      <DesignCanvas designData={designData} />
-                    </div>
-                  )}
-                </div>
-            </div>
-
+          {/* Right side - Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700 border border-gray-200 hover:bg-gray-100"
+              title="Export All Designs"
+              disabled={designs.length === 0}
+            >
+              <CloudArrowDownIcon className="h-4 w-4" />
+              Export
+            </button>
             
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700 border border-gray-200 hover:bg-gray-100"
+              title="Export All Designs"
+              disabled={designs.length === 0}
+            >
+              <CloudArrowDownIcon className="h-4 w-4" />
+              Figma Export
+            </button>
+
+            <button
+              onClick={handleClearAll}
+              className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-200 hover:bg-red-100"
+              title="Clear All Designs"
+              disabled={designs.length === 0}
+            >
+              <TrashIcon className="h-4 w-4" />
+              Clear All
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Canvas area */}
+      <div className="absolute inset-0 top-16">
+        {canvasComponent}
+      </div>
+
+      {/* Floating help panel */}
+      <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-sm text-gray-600 max-w-xs z-40">
+        <h3 className="font-medium text-gray-900 mb-2">Keyboard Shortcuts</h3>
+        <div className="space-y-1">
+          <div><kbd className="bg-gray-100 px-1 rounded text-xs">C</kbd> Center view</div>
+          <div><kbd className="bg-gray-100 px-1 rounded text-xs">A</kbd> Align Items</div>
+          <div><kbd className="bg-gray-100 px-1 rounded text-xs">R</kbd> Reset view</div>
+          <div><kbd className="bg-gray-100 px-1 rounded text-xs">Scroll</kbd> Zoom in/out</div>
+        </div>
+      </div>
+
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#06b6b6]"></div>
+              <span className="text-gray-700">Generating design...</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

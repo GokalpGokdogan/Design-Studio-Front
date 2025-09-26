@@ -113,10 +113,7 @@ const DesignCanvas = ({ designData }) => {
   const { figmaTokens, artboard, tree, floating = [] } = designData;
   const tokenStyleString = createTokenStyles(figmaTokens);
 
-  console.log('Design Data:', designData); // Debug log
-  console.log('Tree structure:', tree); // Debug log
 
-  // Simple responsive container without complex scaling
   return (
     <>
       <style>{tokenStyleString}</style>
