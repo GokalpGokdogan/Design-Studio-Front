@@ -84,7 +84,7 @@ function App() {
                 Gokalp's
               </div>
               <h1 className="text-xl font-semibold text-gray-900">
-                Polymet
+                Design Studio
               </h1>
             </div>
             
