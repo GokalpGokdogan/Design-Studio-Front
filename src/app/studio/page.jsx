@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react"
 import DesignCanvas from "../components/DesignCanvas"
@@ -14,30 +14,98 @@ async function generateDesignDataFromPrompt(prompt) {
 
   try {
     const res = await generateDesign(prompt)
-
-    // if (!res.ok) throw new Error(`HTTP error: ${res.status}`)
-
-    const data = res; //await res.json()
-    const { figmaTokens, layout, components, ...rest } = data || {}
-    return { figmaTokens, layout, components, ...rest }
+    const data = res;
+    
+    return {
+      figmaTokens: data.figmaTokens,
+      artboard: data.artboard,
+      tree: data.tree,
+      floating: data.floating || [],
+      meta: data.meta,
+      ...data
+    }
   } catch (err) {
     console.error("generateDesignDataFromPrompt failed:", err)
     return null
   }
 }
 
-export default function Page() {
-  const [prompt, setPrompt] = useState("")
+export default function Studio() {
+
+  const [prompt, setPrompt] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("prompt") ?? "" : ""
+  );
+
   const [designData, setDesignData] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  
 
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     const result = await Promise.resolve(generateDesignDataFromPrompt(prompt))
-    console.log(result)
+  //   const result = {"figmaTokens": {
+  //       "color": {
+  //           "primary-500": { "value": "#06b6b6" },
+  //           "neutral-50": { "value": "#fafafa" },
+  //           "neutral-200": { "value": "#e4e4e7" },
+  //           "neutral-900": { "value": "#18181b" }
+  //       },
+  //       "spacing": { "md": 16, "lg": 24, "xl": 32 },
+  //       "borderRadius": { "md": 8, "lg": 12 }
+  //   },
+  //   "meta": { "title": "Login Page", "prompt": "login use #06b6b6" },
+  //   "artboard": { "width": 1200, "height": 800, "background": "#fafafa" },
+  //   "tree": {
+  //       "type": "stack",
+  //       "direction": "column",
+  //       "gap": "xl",
+  //       "children": [
+  //           {
+  //               "type": "section",
+  //               "maxWidth": "800px",
+  //               "centered": true,
+  //               "children": [
+  //                   {
+  //                       "type": "component",
+  //                       "role": "heading",
+  //                       "content": "Login to your account",
+  //                       "props": { "level": 1 }
+  //                   },
+  //                   {
+  //                       "type": "component",
+  //                       "role": "input",
+  //                       "props": {
+  //                           "label": "Email",
+  //                           "placeholder": "Enter your email",
+  //                           "type": "email"
+  //                       }
+  //                   },
+  //                   {
+  //                       "type": "component",
+  //                       "role": "input",
+  //                       "props": {
+  //                           "label": "Password",
+  //                           "placeholder": "Enter your password",
+  //                           "type": "password"
+  //                       }
+  //                   },
+  //                   {
+  //                       "type": "component",
+  //                       "role": "button",
+  //                       "content": "Login",
+  //                       "props": { "variant": "primary" }
+  //                   }
+  //               ]
+  //           }
+  //       ]
+  //   }
+  // };
     setDesignData(result)
+    console.log(result, designData)
+
     setLoading(false)
   }
 
@@ -87,8 +155,9 @@ export default function Page() {
               <div className="relative px-5 pb-6">
                 <div className="overflow-hidden rounded-xl border border-slate-200 bg-[color:var(--board,#fafafa)]">
                   {loading ? (
-                    <div className="flex h-[720px] items-center justify-center text-sm text-slate-500">
-                      Generating…
+                    <div className="flex h-[600px] items-center justify-center text-sm text-slate-500">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                      Generating your design...
                     </div>
                   ) : (
                     <div className="p-6">

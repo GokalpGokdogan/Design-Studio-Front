@@ -67,7 +67,6 @@ export const resolveStyles = (style) => {
         } else {
           resolved.color = `var(--color-${value}, ${value})`;
         }
-        print(resolved.color)
         break;
         
       case "shadow":
@@ -81,8 +80,13 @@ export const resolveStyles = (style) => {
   }
   return resolved;
 };
+
 const spacingToCss = (val) =>
   typeof val === "number" ? `${val}px` : `var(--spacing-${val}, 16px)`;
+
+
+const alignMap = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
+const justifyMap = { start: "flex-start", center: "center", end: "flex-end", between: "space-between" };
 
 const LayoutNode = ({ node }) => {
   if (!node) return null;
@@ -99,14 +103,10 @@ const LayoutNode = ({ node }) => {
   if (node.margin != null) containerStyle.margin = spacingToCss(node.margin);
   if (node.gap != null) containerStyle.gap = spacingToCss(node.gap);
 
-
   switch (node.type) {
     case "stack":
       containerStyle.display = "flex";
       containerStyle.flexDirection = node.direction === "row" ? "row" : "column";
-      
-      const alignMap = { start: "flex-start", center: "center", end: "flex-end", stretch: "stretch" };
-      const justifyMap = { start: "flex-start", center: "center", end: "flex-end", between: "space-between" };
       
       if (node.align) containerStyle.alignItems = alignMap[node.align] || node.align;
       if (node.justify) containerStyle.justifyContent = justifyMap[node.justify] || node.justify;
@@ -127,16 +127,31 @@ const LayoutNode = ({ node }) => {
       break;
 
     case "section":
-      containerStyle.display = "block";
+      containerStyle.display = "flex";
+      containerStyle.flexDirection = "column";
+      containerStyle.width = "100%";
+      
       if (node.maxWidth) {
-        containerStyle.maxWidth = typeof node.maxWidth === "number" ? `${node.maxWidth}px` : node.maxWidth;
+        containerStyle.maxWidth = typeof node.maxWidth === "number" 
+          ? `${node.maxWidth}px` 
+          : node.maxWidth;
+        
+        if (node.centered !== false) {
+          containerStyle.marginLeft = "auto";
+          containerStyle.marginRight = "auto";
+        }
       }
-      if (node.centered !== false) {
-        containerStyle.margin = containerStyle.margin || "0 auto";
-      }
-
-      if (!containerStyle.padding && !node.padding) {
+      
+      if (!containerStyle.padding && node.padding === undefined) {
         containerStyle.padding = spacingToCss("xl");
+      }
+      
+      if (node.align) {
+        containerStyle.alignItems = alignMap[node.align] || node.align;
+      }
+      
+      if (node.justify) {
+        containerStyle.justifyContent = justifyMap[node.justify] || node.justify;
       }
       break;
 
@@ -145,7 +160,6 @@ const LayoutNode = ({ node }) => {
       containerStyle.display = "block";
       break;
   }
-
 
   const children = Array.isArray(node.children) ? node.children : [];
   

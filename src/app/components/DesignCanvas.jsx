@@ -34,7 +34,11 @@ const createTokenStyles = (tokens) => {
   
   // Handle borderRadius tokens
   for (const [key, value] of Object.entries(tokens.borderRadius || {})) {
-    variables.push(`--radius-${key}: ${value}px;`);
+    if (value === 9999) {
+      variables.push(`--radius-${key}: 9999px;`);
+    } else {
+      variables.push(`--radius-${key}: ${value}px;`);
+    }
   }
   
   // Handle shadow tokens
@@ -106,35 +110,39 @@ const DesignCanvas = ({ designData }) => {
     );
   }
 
-  // console.log('Design Data:', designData);
-  
   const { figmaTokens, artboard, tree, floating = [] } = designData;
   const tokenStyleString = createTokenStyles(figmaTokens);
 
-  const canvasWidth = Math.min(artboard.width, 1400);
-  const canvasHeight = Math.min(artboard.height, 1000);
-  const scale = canvasWidth < artboard.width ? canvasWidth / artboard.width : 1;
+  console.log('Design Data:', designData); // Debug log
+  console.log('Tree structure:', tree); // Debug log
 
+  // Simple responsive container without complex scaling
   return (
     <>
       <style>{tokenStyleString}</style>
       <div
-        className="relative mx-auto my-8 shadow-2xl overflow-hidden animate-fade-in"
+        className="relative mx-auto my-8 shadow-2xl overflow-auto animate-fade-in bg-white"
         style={{
-          width: `${canvasWidth}px`,
-          height: `${canvasHeight}px`,
+          width: '100%',
+          maxWidth: `${Math.min(artboard.width, 1200)}px`,
+          height: 'auto',
+          minHeight: '400px',
           backgroundColor: artboard.background || 'var(--color-neutral-50, #ffffff)',
           borderRadius: 'var(--radius-lg, 16px)',
           border: '1px solid var(--color-neutral-200, #e4e4e7)',
-          transform: scale < 1 ? `scale(${scale})` : 'none',
-          transformOrigin: 'top center'
         }}
       >
-
-        <div className="absolute inset-0">
+        {/* Main content - no scaling, just render directly */}
+        <div style={{ 
+          width: '100%', 
+          minHeight: '400px',
+          padding: '20px',
+          boxSizing: 'border-box'
+        }}>
           <LayoutNode node={tree} />
         </div>
 
+        {/* Floating overlays */}
         {floating.map((item, idx) => {
           const pos = item.position || {};
           const style = {

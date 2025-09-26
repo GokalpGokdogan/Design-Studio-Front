@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 
 function App() {
   const [prompt, setPrompt] = useState('');
-  const [designData, setDesignData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -19,76 +18,58 @@ function App() {
     setIsLoading(true);
     setError('');
 
+    
+    // set localstorage
+    localStorage.setItem('prompt', prompt);
+    
+    setIsLoading(false);
+    
     router.push('/studio')
 
-    try {
-      const response = await fetch('http://localhost:5000/api/generate-design', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: prompt.trim() }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      setDesignData(data);
-
-    } catch (err) {
-      setError(err.message || 'Failed to generate design');
-      console.error('Error:', err);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
-  const handleExportFigmaTokens = async () => {
-    if (!designData) return;
+  // const handleExportFigmaTokens = async () => {
+  //   if (!designData) return;
 
-    try {
-      const response = await fetch('http://localhost:5000/api/export-figma-tokens', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ designData }),
-      });
+  //   try {
+  //     const response = await fetch('http://localhost:5000/api/export-figma-tokens', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ designData }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
 
-      const data = await response.json();
+  //     const data = await response.json();
       
-      // Download tokens as JSON file
-      const blob = new Blob([JSON.stringify(data.tokens, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = data.filename || 'figma-tokens.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError('Failed to export Figma tokens');
-      console.error('Export error:', err);
-    }
-  };
+  //     // Download tokens as JSON file
+  //     const blob = new Blob([JSON.stringify(data.tokens, null, 2)], {
+  //       type: 'application/json',
+  //     });
+  //     const url = URL.createObjectURL(blob);
+  //     const a = document.createElement('a');
+  //     a.href = url;
+  //     a.download = data.filename || 'figma-tokens.json';
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     document.body.removeChild(a);
+  //     URL.revokeObjectURL(url);
+  //   } catch (err) {
+  //     setError('Failed to export Figma tokens');
+  //     console.error('Export error:', err);
+  //   }
+  // };
 
-  const handleBackToPrompt = () => {
-    setError('');
-  };
+  // const handleBackToPrompt = () => {
+  //   setError('');
+  // };
 
   const handleNewDesign = () => {
     setPrompt('');
-    setDesignData(null);
     setError('');
   };
 
@@ -108,24 +89,19 @@ function App() {
             </div>
             
               <div className="flex gap-3">
-                <button
-                  onClick={handleExportFigmaTokens}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition-colors font-medium"
-                >
-                  Export Figma Tokens
-                </button>
+                
                 <button
                   onClick={handleNewDesign}
                   className="bg-[#06b6b6] text-white px-4 py-2 rounded-xl hover:bg-teal-600 transition-colors font-medium"
                 >
                   New Design
                 </button>
-                <button
+                {/* <button
                   onClick={handleBackToPrompt}
                   className="bg-gray-600 text-white px-4 py-2 rounded-xl hover:bg-gray-700 transition-colors font-medium"
                 >
                   Back
-                </button>
+                </button> */}
               </div>
 
           </div>
@@ -177,7 +153,7 @@ function App() {
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons
             <div className="flex justify-center gap-4 mb-12">
               <button className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                   <DocumentDuplicateIcon className="w-5 h-5 text-gray-400" />
@@ -190,7 +166,7 @@ function App() {
               <button className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                   <CloudArrowDownIcon className="w-5 h-5 text-gray-400" />
               </button>
-            </div>
+            </div> */}
 
             {/* Design Options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -217,13 +193,14 @@ function App() {
               </button>
 
               <button 
-                className="flex items-center justify-between p-6 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-colors text-left group opacity-50 cursor-not-allowed"
-                disabled
+                onClick={() => setPrompt('Design a complex onboarding page. Make it professional.')}
+                className="flex items-center justify-between p-6 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-colors text-left group"
+                disabled={isLoading}
               >
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-1">Design from image</h3>
+                  <h3 className="font-medium text-gray-900 mb-1">Design an Onboarding Page</h3>
                 </div>
-                  <PhotoIcon className="w-5 h-5 text-gray-400" />
+                  <ArrowRightIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
               </button>
             </div>
           </div>
