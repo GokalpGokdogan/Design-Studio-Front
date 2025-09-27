@@ -24,5 +24,8 @@ export const generateDesign = (prompt) =>
     { prompt: prompt.trim() }
   )
 
+export const exportToFigma = (designData) =>
+  api.post("/api/export", { designData: designData, projectId: -1 })
+
 
 export default api

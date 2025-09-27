@@ -7,7 +7,7 @@ import {
   CloudArrowDownIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline"
-import { generateDesign } from "../../lib/api"
+import { generateDesign, exportToFigma } from "../../lib/api"
 
 async function generateDesignDataFromPrompt(prompt) {
   const trimmed = (prompt || "").trim()
@@ -123,6 +123,17 @@ export default function Page() {
     URL.revokeObjectURL(url)
   }
 
+  const handleFigmaExport = () => {
+
+    try {
+      const res = exportToFigma(designs[0].data)
+      console.log(res)
+    }
+    catch (e){
+      console.log("Err", e)
+    }
+  }
+
   const handleClearAll = () => {
     if (confirm('Are you sure you want to clear all designs? This cannot be undone.')) {
       setDesigns([])
@@ -191,7 +202,7 @@ export default function Page() {
             </button>
             
             <button
-              onClick={handleExport}
+              onClick={handleFigmaExport}
               className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700 border border-gray-200 hover:bg-gray-100"
               title="Export All Designs"
               disabled={designs.length === 0}
