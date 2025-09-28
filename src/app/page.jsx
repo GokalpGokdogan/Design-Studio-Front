@@ -66,9 +66,9 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#06b6b6] rounded-lg flex items-center justify-center text-white font-bold">
+              {/* <div className="p-2 bg-[#06b6b6] rounded-lg flex items-center justify-center text-white font-bold">
                 Gokalp's
-              </div>
+              </div> */}
               <h1 className="text-xl font-semibold text-gray-900">
                 Design Studio
               </h1>
@@ -77,7 +77,7 @@ function App() {
             <div className="flex gap-3 items-center">
               <button
                 onClick={handleNewDesign}
-                className="bg-[#06b6b6] text-white px-4 py-2 rounded-xl hover:bg-teal-600 transition-colors font-medium"
+                className="bg-black text-white px-4 py-2 rounded-xl hover:bg-teal-600 transition-colors font-medium"
               >
                 New Design
               </button>
@@ -117,7 +117,7 @@ function App() {
               <button
                 type="submit"
                 disabled={!prompt.trim() || isLoading}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-[#06b6b6] text-white rounded-xl hover:bg-[#06b6b6] focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black text-white rounded-xl hover:bg-[#06b6b6] focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               >
                 {isLoading ? (
                   <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">

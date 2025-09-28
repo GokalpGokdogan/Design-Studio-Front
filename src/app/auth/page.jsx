@@ -42,8 +42,8 @@ const handleSubmit = async (e) => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-[#06b6b6] rounded-lg flex items-center justify-center text-white font-bold text-xl">
-            G
+          <div className=" p-4 bg-black rounded-lg flex items-center justify-center text-white font-bold text-xl">
+            Design Studio
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
@@ -132,7 +132,7 @@ const handleSubmit = async (e) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#06b6b6] hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#06b6b6] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#06b6b6] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Please wait...' : (isLogin ? 'Sign in' : 'Sign up')}
               </button>
