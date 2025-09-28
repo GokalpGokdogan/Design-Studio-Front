@@ -265,6 +265,19 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedDesignId, removeDesign, centerView, autoArrangeDesigns]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Attach wheel event with passive: false
+    const wheelHandler = (e) => handleWheel(e);
+    canvas.addEventListener('wheel', wheelHandler, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('wheel', wheelHandler, { passive: false });
+    };
+  }, [handleWheel]);
+
   return {
     canvasComponent: (
       <div 
@@ -278,7 +291,6 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
           backgroundPosition: `${transform.x}px ${transform.y}px`
         }}
         onMouseDown={handleMouseDown}
-        onWheel={handleWheel}
       >
         {/* Canvas content */}
         <div

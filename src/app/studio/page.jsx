@@ -7,7 +7,8 @@ import {
   CloudArrowDownIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline"
-import { generateDesign, exportToFigma } from "../../lib/api"
+import { generateDesign, exportToFigma, ensureStudioProject, updateProject } from "../../lib/api"
+import { useAuth } from '@/hooks/useAuth'
 
 async function generateDesignDataFromPrompt(prompt) {
   const trimmed = (prompt || "").trim()
@@ -31,47 +32,56 @@ async function generateDesignDataFromPrompt(prompt) {
   }
 }
 
-// Local storage utilities
-const STORAGE_KEY = 'infinite-canvas-designs'
-
-const saveDesignsToStorage = (designs) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(designs))
-  } catch (err) {
-    console.error('Failed to save designs to storage:', err)
-  }
-}
-
-const loadDesignsFromStorage = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch (err) {
-    console.error('Failed to load designs from storage:', err)
-    return []
-  }
-}
-
 export default function Page() {
-
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState("")
   const [designs, setDesigns] = useState([])
   const [loading, setLoading] = useState(false)
   const [canvasAPI, setCanvasAPI] = useState(null)
+  const [currentProject, setCurrentProject] = useState(null)
+  const { isAuthenticated, loading: authLoading } = useAuth()
+
+  // Initialize project on first load
+  useEffect(() => {
+    const initializeProject = async () => {
+      try {
+        const projectData = await ensureStudioProject()
+        setCurrentProject(projectData.project)
+        
+        // Load designs from project data if they exist
+        if (projectData.project.designData && Array.isArray(projectData.project.designData)) {
+          setDesigns(projectData.project.designData)
+        }
+      } catch (error) {
+        console.error('Failed to initialize project:', error)
+      }
+    }
+
+    if (isAuthenticated && !authLoading) {
+      initializeProject()
+    }
+  }, [isAuthenticated, authLoading])
 
   useEffect(() => {
-    const savedDesigns = loadDesignsFromStorage()
-    setDesigns(savedDesigns)
+    const saved = localStorage.getItem("prompt")
+    if (saved) setPrompt(saved)
   }, [])
 
+  // Save designs to project when they change
   useEffect(() => {
-    const saved = localStorage.getItem("prompt");
-    if (saved) setPrompt(saved);
-  }, []);
-
-  useEffect(() => {
-    saveDesignsToStorage(designs)
-  }, [designs])
+    if (currentProject && designs.length > 0) {
+      const saveProject = async () => {
+        try {
+          await updateProject(currentProject.project_id, {
+            designData: designs,
+            prompt: prompt || currentProject.prompt
+          })
+        } catch (error) {
+          console.error('Failed to save project:', error)
+        }
+      }
+      saveProject()
+    }
+  }, [designs, currentProject, prompt])
 
   const handleDesignsUpdate = useCallback((updatedDesigns) => {
     setDesigns(updatedDesigns)
@@ -86,12 +96,34 @@ export default function Page() {
     try {
       const result = await generateDesignDataFromPrompt(prompt)
       if (result) {
-        // Add design to canvas at a random position
         const position = {
           x: Math.random() * 400 + 100,
           y: Math.random() * 300 + 100
         }
-        canvasAPI.addDesign(result, position)
+        
+        const newDesign = {
+          id: `design_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          data: result,
+          position: {
+            ...position,
+            width: result?.artboard?.width || 800,
+            height: result?.artboard?.height || 600
+          },
+          timestamp: Date.now()
+        }
+
+        const updatedDesigns = [...designs, newDesign]
+        setDesigns(updatedDesigns)
+
+        // Update project with new design and prompt
+        if (currentProject) {
+          await updateProject(currentProject.project_id, {
+            designData: updatedDesigns,
+            prompt: prompt,
+            title: prompt.substring(0, 50) + '...' || 'New Design'
+          })
+        }
+        
         localStorage.removeItem("prompt")
         setPrompt("") 
       }
@@ -124,19 +156,31 @@ export default function Page() {
   }
 
   const handleFigmaExport = () => {
-
     try {
-      const res = exportToFigma(designs[0].data)
-      console.log(res)
-    }
-    catch (e){
+      if (designs.length > 0) {
+        const res = exportToFigma(designs[0].data)
+        console.log(res)
+      }
+    } catch (e) {
       console.log("Err", e)
     }
   }
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('Are you sure you want to clear all designs? This cannot be undone.')) {
       setDesigns([])
+      
+      // Also clear from project in database
+      if (currentProject) {
+        try {
+          await updateProject(currentProject.project_id, {
+            designData: [],
+            prompt: ''
+          })
+        } catch (error) {
+          console.error('Failed to clear project designs:', error)
+        }
+      }
     }
   }
 
@@ -153,6 +197,27 @@ export default function Page() {
     }
   }, [addDesign, removeDesign, centerView])
 
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="h-screen w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06b6b6]"></div>
+      </div>
+    )
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <div className="h-screen w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06b6b6] mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen w-full overflow-hidden bg-gray-100">
       {/* Top toolbar */}
@@ -163,6 +228,7 @@ export default function Page() {
             <h1 className="text-lg font-semibold text-gray-900">Design Studio</h1>
             <div className="text-sm text-gray-500">
               {designs.length} design{designs.length !== 1 ? 's' : ''}
+              {currentProject && ` • ${currentProject.title}`}
             </div>
           </div>
 
@@ -204,7 +270,7 @@ export default function Page() {
             <button
               onClick={handleFigmaExport}
               className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700 border border-gray-200 hover:bg-gray-100"
-              title="Export All Designs"
+              title="Export to Figma"
               disabled={designs.length === 0}
             >
               <CloudArrowDownIcon className="h-4 w-4" />
