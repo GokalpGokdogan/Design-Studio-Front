@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import DesignCanvas from './DesignCanvas';
 
-const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
+const InfiniteCanvas = ({ designs = [], onDesignsUpdate, onDesignSelect, selectedDesignId: externalSelectedDesignId }) => {
   const canvasRef = useRef(null);
   const isDraggingRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
@@ -9,8 +9,11 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
   
   // Canvas state
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
-  const [selectedDesignId, setSelectedDesignId] = useState(null);
+  const [internalSelectedDesignId, setInternalSelectedDesignId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Use external selectedDesignId if provided, otherwise use internal state
+  const selectedDesignId = externalSelectedDesignId !== undefined ? externalSelectedDesignId : internalSelectedDesignId;
 
   // Spacing constants
   const DESIGN_SPACING = 80; 
@@ -27,14 +30,34 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
     };
   }, [transform]);
 
-  
+  // Handle design selection
+  const handleDesignClick = useCallback((e, design) => {
+    e.stopPropagation();
+    
+    const newSelectedId = design.id === selectedDesignId ? null : design.id;
+    
+    // Update internal state if not controlled externally
+    if (externalSelectedDesignId === undefined) {
+      setInternalSelectedDesignId(newSelectedId);
+    }
+    
+    // Call external handler if provided
+    onDesignSelect?.(newSelectedId);
+    
+    // Set as current selected design for dragging
+    if (newSelectedId) {
+      selectedDesignRef.current = design;
+    } else {
+      selectedDesignRef.current = null;
+    }
+  }, [selectedDesignId, externalSelectedDesignId, onDesignSelect]);
 
   // Handle mouse down - start dragging canvas or design
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
     const canvasPos = screenToCanvas(e.clientX, e.clientY);
     
-		// For later implementations
+    // Check if clicked on a design
     let clickedDesign = null;
     for (const design of designs) {
       const { x, y, width, height } = design.position;
@@ -47,14 +70,35 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
     }
 
     if (clickedDesign) {
-      setSelectedDesignId(clickedDesign.id);
+      // Select the design if not already selected
+      if (clickedDesign.id !== selectedDesignId) {
+        const newSelectedId = clickedDesign.id;
+        
+        // Update internal state if not controlled externally
+        if (externalSelectedDesignId === undefined) {
+          setInternalSelectedDesignId(newSelectedId);
+        }
+        
+        // Call external handler if provided
+        onDesignSelect?.(newSelectedId);
+      }
+      
       selectedDesignRef.current = clickedDesign;
       setDragOffset({
         x: canvasPos.x - clickedDesign.position.x,
         y: canvasPos.y - clickedDesign.position.y
       });
     } else {
-      setSelectedDesignId(null);
+      // Clicked on empty space - deselect
+      if (selectedDesignId) {
+        // Update internal state if not controlled externally
+        if (externalSelectedDesignId === undefined) {
+          setInternalSelectedDesignId(null);
+        }
+        
+        // Call external handler if provided
+        onDesignSelect?.(null);
+      }
       selectedDesignRef.current = null;
     }
 
@@ -63,7 +107,7 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [designs, screenToCanvas]);
+  }, [designs, screenToCanvas, selectedDesignId, externalSelectedDesignId, onDesignSelect]);
 
   // Handle mouse move - drag canvas or design
   const handleMouseMove = useCallback((e) => {
@@ -278,7 +322,7 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
     };
   }, [handleWheel]);
 
-  return {
+    return {
     canvasComponent: (
       <div 
         ref={canvasRef}
@@ -307,7 +351,7 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
               key={design.id}
               className={`absolute border-2 rounded-lg overflow-hidden transition-all ${
                 selectedDesignId === design.id 
-                  ? 'border-blue-500 shadow-lg' 
+                  ? 'border-blue-500 shadow-lg ring-2 ring-blue-200' 
                   : 'border-gray-300 hover:border-gray-400'
               }`}
               style={{
@@ -317,17 +361,27 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
                 height: `${design.position.height}px`,
                 cursor: selectedDesignId === design.id ? 'grabbing' : 'grab'
               }}
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => handleDesignClick(e, design)}
             >
               {/* Design header */}
               <div className="bg-white border-b border-gray-200 px-3 py-2 flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-700 truncate">
                   {design.data?.meta?.title || `Design ${design.id.slice(-4)}`}
+                  {selectedDesignId === design.id && (
+                    <span className="ml-2 text-xs text-blue-600 font-normal">(Selected)</span>
+                  )}
                 </span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     removeDesign(design.id);
+                    
+                    if (selectedDesignId === design.id) {
+                      if (externalSelectedDesignId === undefined) {
+                        setInternalSelectedDesignId(null);
+                      }
+                      onDesignSelect?.(null);
+                    }
                   }}
                   className="text-gray-400 hover:text-red-500 text-xs"
                 >
@@ -392,7 +446,7 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate }) => {
     centerView,
     autoArrangeDesigns,
     transform,
-    selectedDesignId
+    selectedDesignId: externalSelectedDesignId !== undefined ? externalSelectedDesignId : internalSelectedDesignId
   };
 };
 

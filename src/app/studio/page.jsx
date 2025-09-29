@@ -6,6 +6,8 @@ import {
   ArrowRightIcon,
   CloudArrowDownIcon,
   TrashIcon,
+  DocumentDuplicateIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline"
 import { generateDesign, exportToFigma, ensureStudioProject, updateProject } from "../../lib/api"
 import { useAuth } from '@/hooks/useAuth'
@@ -32,13 +34,18 @@ async function generateDesignDataFromPrompt(prompt) {
   }
 }
 
-export default function Page() {
+export default function Studio() {
   const [prompt, setPrompt] = useState("")
   const [designs, setDesigns] = useState([])
   const [loading, setLoading] = useState(false)
   const [canvasAPI, setCanvasAPI] = useState(null)
   const [currentProject, setCurrentProject] = useState(null)
   const { isAuthenticated, loading: authLoading } = useAuth()
+  
+
+  const [selectedDesignId, setSelectedDesignId] = useState(null)
+  const [exportId, setExportId] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   // Initialize project on first load
   useEffect(() => {
@@ -85,6 +92,13 @@ export default function Page() {
 
   const handleDesignsUpdate = useCallback((updatedDesigns) => {
     setDesigns(updatedDesigns)
+  }, [])
+
+  // Handle design selection
+  const handleDesignSelect = useCallback((designId) => {
+    setSelectedDesignId(designId)
+    setExportId(null) // Reset export ID when selecting a new design
+    setCopied(false)
   }, [])
 
   // Generate new design and add to canvas
@@ -155,20 +169,54 @@ export default function Page() {
     URL.revokeObjectURL(url)
   }
 
-  const handleFigmaExport = () => {
+  // Export selected design to Figma
+  const handleFigmaExport = async () => {
     try {
-      if (designs.length > 0) {
-        const res = exportToFigma(designs[0].data)
-        console.log(res)
+      if (selectedDesignId) {
+        const selectedDesign = designs.find(design => design.id === selectedDesignId)
+        if (selectedDesign) {
+          console.log(selectedDesign.data)
+          const res = await exportToFigma(selectedDesign.data)
+          console.log("Figma export response:", res)
+          
+          // Assuming the API returns an export_id in the response
+          if (res.exportId) {
+            setExportId(res.exportId)
+          } else if (res.id) {
+            setExportId(res.id)
+          } else {
+            // Fallback to a generated ID if API doesn't return one
+            setExportId(`False_figma_export_${Date.now()}`)
+          }
+        }
+      } else {
+        alert("Please select a design first by clicking on it")
       }
     } catch (e) {
-      console.log("Err", e)
+      console.log("Figma export error:", e)
+      alert("Failed to export to Figma. Please try again.")
+    }
+  }
+
+  // Copy export ID to clipboard
+  const handleCopyExportId = async () => {
+    if (exportId) {
+      try {
+        await navigator.clipboard.writeText(exportId)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (err) {
+        console.error('Failed to copy export ID:', err)
+      }
     }
   }
 
   const handleClearAll = async () => {
     if (confirm('Are you sure you want to clear all designs? This cannot be undone.')) {
       setDesigns([])
+      setSelectedDesignId(null)
+      setExportId(null)
+      setCopied(false)
       
       // Also clear from project in database
       if (currentProject) {
@@ -185,9 +233,11 @@ export default function Page() {
   }
 
   // Get the infinite canvas component and API
-  const { canvasComponent, addDesign, removeDesign, centerView, transform, selectedDesignId } = InfiniteCanvas({
+  const { canvasComponent, addDesign, removeDesign, centerView, transform } = InfiniteCanvas({
     designs,
-    onDesignsUpdate: handleDesignsUpdate
+    onDesignsUpdate: handleDesignsUpdate,
+    onDesignSelect: handleDesignSelect,
+    selectedDesignId 
   })
 
   // Set canvas API reference
@@ -247,7 +297,7 @@ export default function Page() {
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
-              className="inline-flex items-center gap-1 rounded-md bg-[#06b6b6] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#06b6b6] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 rounded-md bg-black px-3 py-1.5 text-xs font-medium text-white hover:bg-[#06b6b6] disabled:opacity-60 disabled:cursor-not-allowed"
               title="Generate Design"
             >
               {loading ? 'Generating...' : 'Generate'} 
@@ -267,19 +317,10 @@ export default function Page() {
               Export
             </button>
             
-            <button
-              onClick={handleFigmaExport}
-              className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700 border border-gray-200 hover:bg-gray-100"
-              title="Export to Figma"
-              disabled={designs.length === 0}
-            >
-              <CloudArrowDownIcon className="h-4 w-4" />
-              Figma Export
-            </button>
 
             <button
               onClick={handleClearAll}
-              className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-200 hover:bg-red-100"
+              className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 border border-red-200 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Clear All Designs"
               disabled={designs.length === 0}
             >
@@ -303,8 +344,99 @@ export default function Page() {
           <div><kbd className="bg-gray-100 px-1 rounded text-xs">A</kbd> Align Items</div>
           <div><kbd className="bg-gray-100 px-1 rounded text-xs">R</kbd> Reset view</div>
           <div><kbd className="bg-gray-100 px-1 rounded text-xs">Scroll</kbd> Zoom in/out</div>
+          <div><kbd className="bg-gray-100 px-1 rounded text-xs">Click</kbd> Select design</div>
         </div>
       </div>
+
+      {/* Selected design info panel with export options */}
+      {selectedDesignId && (
+        <div className="absolute top-20 left-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4 min-w-[300px] z-40">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 text-sm">Selected Design</h3>
+            <button
+              onClick={() => {
+                setSelectedDesignId(null);
+                setExportId(null);
+                setCopied(false);
+              }}
+              className="text-gray-400 hover:text-gray-600 text-xs p-1 rounded hover:bg-gray-100 transition-colors"
+              title="Clear selection"
+            >
+              <TrashIcon className="h-3 w-3" />
+            </button>
+          </div>
+          
+          {/* Design info */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+              <span>Design ID:</span>
+              <code className="bg-gray-50 px-2 py-1 rounded font-mono text-gray-800">
+                {selectedDesignId.slice(-8)}
+              </code>
+            </div>
+            {(() => {
+              const selectedDesign = designs.find(d => d.id === selectedDesignId);
+              return selectedDesign?.data?.meta?.title && (
+                <div className="text-xs text-gray-600">
+                  <span className="font-medium">Title:</span> {selectedDesign.data.meta.title}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Figma export section */}
+          <div className="space-y-3">
+            <button
+              onClick={handleFigmaExport}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-black border border-black hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <CloudArrowDownIcon className="h-4 w-4" />
+              {loading ? 'Exporting to Figma...' : 'Export to Figma'}
+            </button>
+
+            {/* Export ID display */}
+            {exportId && (
+              <div className="bg-gray-50 rounded-md border border-gray-200 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-700">Export ID</span>
+                  <button
+                    onClick={handleCopyExportId}
+                    className={`p-1 rounded transition-colors ${
+                      copied 
+                        ? 'text-green-600 bg-green-100' 
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-white'
+                    }`}
+                    title={copied ? "Copied!" : "Copy to clipboard"}
+                  >
+                    {copied ? (
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    ) : (
+                      <DocumentDuplicateIcon className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+                <code className="text-xs bg-white px-2 py-2 rounded border border-gray-300 font-mono text-gray-800 block w-full truncate">
+                  {exportId}
+                </code>
+                {copied && (
+                  <div className="mt-2 text-xs text-green-600 flex items-center gap-1">
+                    <CheckIcon className="h-3 w-3" />
+                    Copied to clipboard!
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Help text */}
+          {!exportId && (
+            <p className="mt-3 text-xs text-gray-500 text-center">
+              Click "Export to Figma" to generate a Figma export ID
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Loading overlay */}
       {loading && (

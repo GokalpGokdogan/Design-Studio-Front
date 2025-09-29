@@ -37,10 +37,10 @@ function App() {
   const handleNewDesign = () => {
     setPrompt('');
     setError('');
+    router.push('/studio');
   };
 
   const handleLogout = async () => {
-    // Clear client-side auth state
     document.cookie = 'uid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     router.push('/auth');
   };
@@ -54,7 +54,6 @@ function App() {
     );
   }
 
-  // Show auth page if not authenticated
   if (!isAuthenticated) {
     router.push("/auth")
   }
