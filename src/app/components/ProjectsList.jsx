@@ -102,20 +102,20 @@ const ProjectsList = ({ maxItems = 6 }) => {
   if (err || projects.length === 0) return null;
 
   return (
-    <section className="w-full max-w-4xl mx-auto mb-16">
+    <section className="w-full max-w-4xl mx-auto my-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Recent Projects</h2>
           <p className="text-gray-600 mt-1">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
         </div>
 
-        <button
+        {/* <button
           onClick={handleViewAllProjects}
           className="flex items-center gap-2 text-[#06b6b6] hover:text-teal-700 font-medium transition-colors"
         >
           View all
           <ArrowRightIcon className="w-4 h-4" />
-        </button>
+        </button> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
