@@ -16,10 +16,9 @@ const ProjectsList = ({ maxItems = 6 }) => {
   const [err, setErr] = useState(null);
   const [showAll, setShowAll] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, userId, loading: authLoading } = useAuth(); // Use the auth hook
+  const { isAuthenticated, userId, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // Wait until auth check is complete
     if (authLoading) return;
 
     if (!isAuthenticated) {
@@ -43,9 +42,7 @@ const ProjectsList = ({ maxItems = 6 }) => {
 
 
   const projects = useMemo(() => {
-    console.log('Normalizing projects:', serverProjects); // Debug
     return serverProjects.map((project) => {
-      // Get the first design from designData array to show preview
       const firstDesign = Array.isArray(project.designData) && project.designData.length > 0 
         ? project.designData[0] 
         : null;

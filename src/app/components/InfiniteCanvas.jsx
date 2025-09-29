@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import DesignCanvas from './DesignCanvas';
 
 const InfiniteCanvas = ({ designs = [], onDesignsUpdate, onDesignSelect, selectedDesignId: externalSelectedDesignId }) => {
@@ -199,7 +199,7 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate, onDesignSelect, selecte
     const newPosition = position || calculateNewDesignPosition();
     
     const newDesign = {
-      id: `design_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `design_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       data: designData,
       position: {
         x: newPosition.x,
@@ -220,7 +220,10 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate, onDesignSelect, selecte
     const updatedDesigns = designs.filter(design => design.id !== designId);
     onDesignsUpdate?.(updatedDesigns);
     if (selectedDesignId === designId) {
-      setSelectedDesignId(null);
+      if (externalSelectedDesignId === undefined) {
+        setInternalSelectedDesignId(null);
+      }
+      onDesignSelect?.(null);
     }
   }, [designs, selectedDesignId, onDesignsUpdate]);
 
@@ -309,18 +312,18 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate, onDesignSelect, selecte
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedDesignId, removeDesign, centerView, autoArrangeDesigns]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // useEffect(() => {
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return;
 
-    // Attach wheel event with passive: false
-    const wheelHandler = (e) => handleWheel(e);
-    canvas.addEventListener('wheel', wheelHandler, { passive: false });
+  //   // Attach wheel event with passive: false
+  //   const wheelHandler = (e) => handleWheel(e);
+  //   canvas.addEventListener('wheel', wheelHandler, { passive: false });
 
-    return () => {
-      canvas.removeEventListener('wheel', wheelHandler, { passive: false });
-    };
-  }, [handleWheel]);
+  //   return () => {
+  //     canvas.removeEventListener('wheel', wheelHandler, { passive: false });
+  //   };
+  // }, [handleWheel]);
 
     return {
     canvasComponent: (
@@ -335,6 +338,7 @@ const InfiniteCanvas = ({ designs = [], onDesignsUpdate, onDesignSelect, selecte
           backgroundPosition: `${transform.x}px ${transform.y}px`
         }}
         onMouseDown={handleMouseDown}
+        onWheel={handleWheel}
       >
         {/* Canvas content */}
         <div
