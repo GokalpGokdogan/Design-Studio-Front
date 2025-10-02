@@ -32,7 +32,7 @@ export const generateDesign = (prompt) =>
   api.post("/api/generate-design", { prompt: prompt.trim() })
 
 export const exportToFigma = (designData) =>
-  api.post("/api/export", { designData: designData, projectId: -1 })
+  api.post("/api/export", { designData: designData, projectId: -1 }) // Will update projectId later for better tracking
 
 
 

@@ -64,9 +64,7 @@ const ProjectsList = ({ maxItems = 6 }) => {
 
   const displayedProjects = showAll ? projects : projects.slice(0, maxItems);
 
-
   const handleViewProject = (project) => {
-    // Navigate to studio with project ID
     router.push(`/studio?projectId=${project.id}`);
   };
 
@@ -85,9 +83,9 @@ const ProjectsList = ({ maxItems = 6 }) => {
     }
   };
 
-  const handleViewAllProjects = () => {
-    router.push('/studio?view=projects');
-  };
+  // const handleViewAllProjects = () => {
+  //   router.push('/studio?view=projects');
+  // };
 
   const ProjectIcon = () => (
     <div className="w-10 h-10 bg-gradient-to-br from-[#06b6b6] to-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-xs">
@@ -116,7 +114,7 @@ const ProjectsList = ({ maxItems = 6 }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayedProjects.map((project) => (
+        {displayedProjects[0].projectData.designData.map((project) => (
           <div
             key={project.id}
             className="bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group cursor-pointer p-4"
@@ -128,7 +126,7 @@ const ProjectsList = ({ maxItems = 6 }) => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-base font-semibold text-gray-900 group-hover:text-[#06b6b6] transition-colors truncate">
-                    {project.title}
+                    {project.data.meta.title}
                   </h3>
                   <button
                     onClick={(e) => handleDeleteProject(project, e)}
@@ -145,7 +143,7 @@ const ProjectsList = ({ maxItems = 6 }) => {
                   </p>
                 )}
 
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                {/* <div className="flex items-center justify-between text-xs text-gray-500">
                   <span className="flex items-center gap-1">
                     <CalendarIcon className="w-3 h-3" />
                     {project.date}
@@ -153,7 +151,7 @@ const ProjectsList = ({ maxItems = 6 }) => {
                   <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded">
                     {project.dimensions}
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

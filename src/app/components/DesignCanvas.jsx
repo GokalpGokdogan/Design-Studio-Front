@@ -129,7 +129,7 @@ const DesignCanvas = ({ designData }) => {
           border: '1px solid var(--color-neutral-200, #e4e4e7)',
         }}
       >
-        {/* Main content - no scaling, just render directly */}
+        {/* Main content */}
         <div style={{ 
           width: '100%', 
           minHeight: '400px',

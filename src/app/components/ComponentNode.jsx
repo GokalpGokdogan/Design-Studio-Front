@@ -429,7 +429,7 @@ const ComponentNode = ({ component }) => {
         </span>
       );
 
-    // Fallback for basic components
+    // Fallback for components
     case "heading": {
       const Tag = `h${props.level || 1}`;
       const sizes = {

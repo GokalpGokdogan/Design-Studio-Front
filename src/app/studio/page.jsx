@@ -97,7 +97,7 @@ export default function Studio() {
   // Handle design selection
   const handleDesignSelect = useCallback((designId) => {
     setSelectedDesignId(designId)
-    setExportId(null) // Reset export ID when selecting a new design
+    setExportId(null)
     setCopied(false)
   }, [])
 
